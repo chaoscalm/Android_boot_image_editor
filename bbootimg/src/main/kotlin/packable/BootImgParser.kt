@@ -117,7 +117,7 @@ class BootImgParser() : IPackable {
                     val hd = newHashDesc.auxBlob!!.hashDescriptors.get(0).apply { this.sequence = seq }
                     this.auxBlob!!.hashDescriptors.add(hd)
                 }
-                Avb().packVbMetaWithPadding("vbmeta.img", mainVBMeta)
+               Avb().packVbMetaWithPadding("vbmeta.img", mainVBMeta)
             } else {
                 log.info("no companion vbmeta.img")
             }

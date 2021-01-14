@@ -30,10 +30,12 @@ class Avb {
     private val DEBUG = false
 
     //migrated from: avbtool::Avb::addHashFooter
-    fun addHashFooter(image_file: String,
-                      partition_size: Long, //aligned by Avb::BLOCK_SIZE
-                      partition_name: String,
-                      newAvbInfo: AVBInfo) {
+    fun addHashFooter(
+        image_file: String,
+        partition_size: Long, //aligned by Avb::BLOCK_SIZE
+        partition_name: String,
+        newAvbInfo: AVBInfo
+    ) {
         log.info("addHashFooter($image_file) ...")
 
         imageSizeCheck(partition_size, image_file)
@@ -115,8 +117,10 @@ class Avb {
         }
         footer?.let {
             FileOutputStream(File(image_file), true).channel.use { fc ->
-                log.info("original image $image_file has AVB footer, " +
-                        "truncate it to original SIZE: ${it.originalImageSize}")
+                log.info(
+                    "original image $image_file has AVB footer, " +
+                            "truncate it to original SIZE: ${it.originalImageSize}"
+                )
                 fc.truncate(it.originalImageSize)
             }
         }
@@ -126,8 +130,10 @@ class Avb {
         //image size sanity check
         val maxMetadataSize = MAX_VBMETA_SIZE + MAX_FOOTER_SIZE
         if (partition_size < maxMetadataSize) {
-            throw IllegalArgumentException("Parition SIZE of $partition_size is too small. " +
-                    "Needs to be at least $maxMetadataSize")
+            throw IllegalArgumentException(
+                "Parition SIZE of $partition_size is too small. " +
+                        "Needs to be at least $maxMetadataSize"
+            )
         }
         val maxImageSize = partition_size - maxMetadataSize
         log.info("max_image_size: $maxImageSize")
@@ -135,14 +141,18 @@ class Avb {
         //TODO: typical block size = 4096L, from avbtool::Avb::ImageHandler::block_size
         //since boot.img is not in sparse format, we are safe to hardcode it to 4096L for now
         if (partition_size % BLOCK_SIZE != 0L) {
-            throw IllegalArgumentException("Partition SIZE of $partition_size is not " +
-                    "a multiple of the image block SIZE 4096")
+            throw IllegalArgumentException(
+                "Partition SIZE of $partition_size is not " +
+                        "a multiple of the image block SIZE 4096"
+            )
         }
 
         val originalFileSize = File(image_file).length()
         if (originalFileSize > maxImageSize) {
-            throw IllegalArgumentException("Image size of $originalFileSize exceeds maximum image size " +
-                    "of $maxImageSize in order to fit in a partition size of $partition_size.")
+            throw IllegalArgumentException(
+                "Image size of $originalFileSize exceeds maximum image size " +
+                        "of $maxImageSize in order to fit in a partition size of $partition_size."
+            )
         }
     }
 
@@ -262,6 +272,22 @@ class Avb {
             }
         }
 
+        //FIXME
+        val declaredAlg = Algorithms.get(ai.header!!.algorithm_type)
+        if (declaredAlg!!.public_key_num_bytes > 0) {
+            if (AuxBlob.encodePubKey(declaredAlg!!).contentEquals(ai.auxBlob!!.pubkey!!.pubkey)) {
+                log.warn("vbmeta is signed with dev key")
+            } else {
+                log.warn("vbmeta is signed with release key")
+            }
+            val calcAuth = AuthBlob.createBlob(ai.header!!.encode(), ai.auxBlob!!.encode(declaredAlg), declaredAlg.name)
+            log.info("calc auth: " + Helper.toHexString(calcAuth))
+            log.info("read auth:" + ai.authBlob!!.hash + ai.authBlob!!.signature!!)
+        } else {
+            log.warn("no key for current algorithm")
+        }
+        //FIXME
+
         if (dumpFile) {
             ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(File(jsonFile), ai)
             log.info("vbmeta info of [$image_file] has been analyzed")
@@ -284,7 +310,8 @@ class Avb {
         val headerBlob = ai.header!!.apply {
             auxiliary_data_block_size = auxBlob.size.toLong()
             authentication_data_block_size = Helper.round_to_multiple(
-                    (alg.hash_num_bytes + alg.signature_num_bytes).toLong(), 64)
+                (alg.hash_num_bytes + alg.signature_num_bytes).toLong(), 64
+            )
 
             descriptors_offset = 0
             descriptors_size = ai.auxBlob?.descriptorSize?.toLong() ?: 0

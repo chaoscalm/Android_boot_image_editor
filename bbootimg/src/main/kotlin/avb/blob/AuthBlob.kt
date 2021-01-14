@@ -11,14 +11,17 @@ import java.security.MessageDigest
 
 @OptIn(ExperimentalUnsignedTypes::class)
 data class AuthBlob(
-        var offset: Long = 0,
-        var size: Long = 0,
-        var hash: String? = null,
-        var signature: String? = null) {
+    var offset: Long = 0,
+    var size: Long = 0,
+    var hash: String? = null,
+    var signature: String? = null
+) {
     companion object {
-        fun createBlob(header_data_blob: ByteArray,
-                        aux_data_blob: ByteArray,
-                        algorithm_name: String): ByteArray {
+        fun createBlob(
+            header_data_blob: ByteArray,
+            aux_data_blob: ByteArray,
+            algorithm_name: String
+        ): ByteArray {
             val alg = Algorithms.get(algorithm_name)!!
             val authBlockSize = Helper.round_to_multiple((alg.hash_num_bytes + alg.signature_num_bytes).toLong(), 64)
             if (0L == authBlockSize) {
@@ -35,6 +38,7 @@ data class AuthBlob(
                     update(header_data_blob)
                     update(aux_data_blob)
                 }.digest()
+                log.warn("create blob: hash = " + Helper.toHexString(binaryHash))
                 val k = KeyHelper2.parseRsaPk8(Files.readAllBytes(Paths.get(alg.defaultKey.replace(".pem", ".pk8"))))
                 binarySignature = KeyHelper2.rawSign(k, Helper.join(alg.padding, binaryHash))
             }
