@@ -246,9 +246,10 @@ class AndroidCpio {
             }
             val bytesRead = cis.bytesRead
             cis.close()
-            val fis = FileInputStream(cpioFile)
-            fis.skip(bytesRead - 128)
-            val remaining = fis.readAllBytes()
+            val remaining = FileInputStream(cpioFile).use { fis ->
+                fis.skip(bytesRead - 128)
+                fis.readAllBytes()
+            }
             val foundIndex = String(remaining).lastIndexOf("070701")
             val entryInfo = AndroidCpioEntry(
                 name = CpioConstants.CPIO_TRAILER,
