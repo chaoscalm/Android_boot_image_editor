@@ -17,6 +17,30 @@ data class AuthBlob(
     var signature: String? = null
 ) {
     companion object {
+        fun calcHash(
+            header_data_blob: ByteArray,
+            aux_data_blob: ByteArray,
+            algorithm_name: String
+        ): ByteArray {
+            var binaryHash: ByteArray = byteArrayOf()
+            val alg = Algorithms.get(algorithm_name)!!
+            if (alg.name != "NONE") {
+                val hasher = MessageDigest.getInstance(Helper.pyAlg2java(alg.hash_name))
+                binaryHash = hasher.apply {
+                    update(header_data_blob)
+                    update(aux_data_blob)
+                }.digest()
+                log.info("calc hash = " + Helper.toHexString(binaryHash))
+            } else {
+                log.info("calc hash: NONE")
+            }
+           return binaryHash
+        }
+
+        fun calcSignature() {
+
+        }
+
         fun createBlob(
             header_data_blob: ByteArray,
             aux_data_blob: ByteArray,
@@ -30,15 +54,9 @@ data class AuthBlob(
             }
 
             //hash & signature
-            var binaryHash: ByteArray = byteArrayOf()
+            val binaryHash = calcHash(header_data_blob, aux_data_blob, algorithm_name)
             var binarySignature: ByteArray = byteArrayOf()
-            if (algorithm_name != "NONE") {
-                val hasher = MessageDigest.getInstance(Helper.pyAlg2java(alg.hash_name))
-                binaryHash = hasher.apply {
-                    update(header_data_blob)
-                    update(aux_data_blob)
-                }.digest()
-                log.warn("create blob: hash = " + Helper.toHexString(binaryHash))
+            if (alg.name != "NONE") {
                 val k = KeyHelper2.parseRsaPk8(Files.readAllBytes(Paths.get(alg.defaultKey.replace(".pem", ".pk8"))))
                 binarySignature = KeyHelper2.rawSign(k, Helper.join(alg.padding, binaryHash))
             }

@@ -27,6 +27,7 @@
 import argparse
 import binascii
 import bisect
+import binascii
 import hashlib
 import json
 import math
@@ -577,6 +578,7 @@ def verify_vbmeta_signature(vbmeta_header, vbmeta_blob):
   ha.update(header_blob)
   ha.update(aux_blob)
   computed_digest = ha.digest()
+  print("computed %s hash : %s" % (alg.hash_name, binascii.hexlify(computed_digest)))
 
   if computed_digest != digest_blob:
     return False

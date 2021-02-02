@@ -275,14 +275,15 @@ class Avb {
         //FIXME
         val declaredAlg = Algorithms.get(ai.header!!.algorithm_type)
         if (declaredAlg!!.public_key_num_bytes > 0) {
-            if (AuxBlob.encodePubKey(declaredAlg!!).contentEquals(ai.auxBlob!!.pubkey!!.pubkey)) {
+            if (AuxBlob.encodePubKey(declaredAlg).contentEquals(ai.auxBlob!!.pubkey!!.pubkey)) {
                 log.warn("vbmeta is signed with dev key")
             } else {
                 log.warn("vbmeta is signed with release key")
             }
             val calcAuth = AuthBlob.createBlob(ai.header!!.encode(), ai.auxBlob!!.encode(declaredAlg), declaredAlg.name)
             log.info("calc auth: " + Helper.toHexString(calcAuth))
-            log.info("read auth:" + ai.authBlob!!.hash + ai.authBlob!!.signature!!)
+            log.info("read auth(hash):" + ai.authBlob!!.hash)
+            log.info("read auth(siga):" + ai.authBlob!!.signature!!)
         } else {
             log.warn("no key for current algorithm")
         }
